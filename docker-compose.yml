@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: smartone-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 'mld2973665'
+      MYSQL_DATABASE: 'SmartOneCore'
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    restart: on-failure
+    ports:
+      - '3306:3306'
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      MYSQL_ROOT_PASSWORD: 'mld2973665'
+      PMA_HOST: smartone-mysql
+    ports:
+      - '9000:80'
+
+  smartone-services-core-api:
+    #image: ${DC_IMAGE_NAME}:${DC_IMAGE_TAG}
+    image: registry.gitlab.com/hanatech_iot/new-smart-one/smart-building/smart_building_backend_edition_2022:0e78a232 
+    pull_policy: always
+    container_name: smartone-services-core-api
+    restart: on-failure
+    environment:
+      ConnectionStrings__CoreContext: Server=smartone-mysql;Database=SmartOneCore;Uid=root;Pwd=mld2973665;
+    volumes:
+      - ./smartone-services:/root/.aspnet/DataProtection-Keys
+    ports:
+      - '8000:80'
+    depends_on:
+      - mysql
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - '9998:8080'
